@@ -23,4 +23,4 @@ USER appuser
 
 # During debugging, this entry point will be overridden. For more information, please refer to https://aka.ms/vscode-docker-python-debug
 # File wsgi.py was not found in subfolder: 'TesteDjango'. Please enter the Python path to wsgi file.
-CMD ["gunicorn", "--bind", "0.0.0.0:1024", "pythonPath.to.wsgi"]
+CMD ["gunicorn", "--bind", "0.0.0.0:1024", "web_project.wsgi"]
