@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-@hx#*-la3f-h8j)zs-(+!53z(1_++b%4+l1tbn*larmvbjt4p7
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS =[] #['0.0.0.0', 'localhost','127.0.0.1']
 
 
 # Application definition
@@ -75,10 +75,8 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'web_project.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
-
 DATABASES = {
     'default': {
         'ENGINE': 'djongo',
@@ -89,7 +87,6 @@ DATABASES = {
             }
     }
 }
-#"host": os.getenv("CONECTIONSTRING"),
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
