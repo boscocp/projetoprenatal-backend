@@ -8,11 +8,3 @@ services:
       dockerfile: ./Dockerfile
     ports:
       - 1024:1024
-  frontend:
-    image: frontend
-    build:
-      context: frontend
-      dockerfile: ./Dockerfile
-    ports:
-      - 4200:4200
-    restart: "always"
