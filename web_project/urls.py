@@ -15,9 +15,13 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import  path
-from django.conf.urls import include, url
-from UserApp import views
+from django.conf.urls import include
+from django.conf.urls.static import static
+from django.conf import settings
+from django.views.generic import RedirectView
+
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('user/', include('UserApp.urls'))
-]
+    path('user/', include('UserApp.urls')),
+    path('', RedirectView.as_view(url='user/')),
+]+ static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework_simplejwt',
     'corsheaders',
     'UserApp.apps.UserappConfig',
 ]
@@ -81,8 +82,8 @@ DATABASES = {
     'default': {
         'ENGINE': 'djongo',
         'CLIENT': {
-            "host": os.getenv("CONECTIONSTRING"),
-            "name": "prenatal",
+            "host": "mongodb+srv://m001-student:m001-student@sandbox.5mpp4.mongodb.net/myFirstDatabase?retryWrites=true&w=majority",#os.getenv("CONECTIONSTRING"),
+            "name": "prenataldb",
             "authMechanism":"SCRAM-SHA-1"
             }
     }
@@ -125,6 +126,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = 'static'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
