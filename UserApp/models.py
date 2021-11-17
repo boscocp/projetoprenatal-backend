@@ -2,8 +2,15 @@ from django.db import models
 from pygments.lexers import get_all_lexers
 from django.urls import reverse
 import uuid
+from django.contrib.auth.models import AbstractUser
 
 LEXERS = [item for item in get_all_lexers() if item[1]]
+USER_TIPE_CHOICES = [
+    ('MED', 'medic'),
+    ('ADM', 'administrator'),
+    ('PAT', 'patient'),
+    ('AUD', 'auditor'),
+]
 
 # Create your models here.
 class Patient(models.Model):
@@ -21,3 +28,11 @@ class Patient(models.Model):
     def __str__(self):
         """String for representing the Model object."""
         return f'{self.id}, {self.last_name}, {self.first_name}'
+class User(AbstractUser):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, help_text='Unique ID for this particular user')
+    email = models.CharField(max_length=100, unique=True,blank=False)
+    password = models.CharField(max_length=100,blank=False)
+    tipo = models.CharField(max_length=15,blank=False,choices=USER_TIPE_CHOICES,default='PAT')
+    username = None
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = []
