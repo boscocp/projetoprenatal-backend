@@ -3,19 +3,49 @@ from rest_framework import response
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.exceptions import AuthenticationFailed
-from UserApp.models import Patient, User
-from UserApp.serializers import PatientSerializer, UserSerializer
+from UserApp.models import Patient, User, Person
+from UserApp.serializers import PatientSerializer, UserSerializer, PersonSerializer
 import jwt, datetime
+from rest_framework import status
+
 # Create your views here.
-
-class PatientList(generics.ListCreateAPIView):
-    queryset = Patient.objects.all()
-    serializer_class = PatientSerializer
-
-
-class PatientDetail(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Patient.objects.all()
-    serializer_class =PatientSerializer
+class PatientView(APIView):
+    def post(self, request):
+        serializer = PatientSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        response = Response()
+        response.data = {
+            'patient':'patient creation success'
+        }
+        return response
+        
+class PersonView(APIView):
+    def post(self, request):
+        serializer = PersonSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+    def get(self, request, pk):
+        #token = request.COOKIES.get('jwt')
+        #payload = check_jwt_token(token)
+        person = Person.objects.filter(cpf=pk).first()    
+        serializer = PersonSerializer(person)
+        return Response(serializer.data)
+    def put(self, request,pk):
+        #token = request.COOKIES.get('jwt')
+        #payload = check_jwt_token(token)
+        person = Person.objects.filter(cpf=pk).first()
+        serializer = PersonSerializer(person,data=request.data)
+        serializer.is_valid(raise_exception=True)    
+        serializer.save()
+        return Response(serializer.data)
+    def delete(self, request, pk):
+        #token = request.COOKIES.get('jwt')
+        #payload = check_jwt_token(token)
+        person = Person.objects.filter(cpf=pk)
+        person.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
     
 class UserView(APIView):
     def post(self, request):
@@ -30,11 +60,7 @@ class LoginView(APIView):
         password = request.data['password']
         user = User.objects.filter(email=email).first()
         serializer = UserSerializer(user)
-        if user is None:
-            raise AuthenticationFailed("User not found!")
-        if not user.check_password(password):
-            raise AuthenticationFailed("incorrect password!")
-        print(user.id)
+        check_authentication(password, user)
         payload = {
             'id':serializer.data['id'],
             'tipo':user.tipo,
@@ -48,19 +74,29 @@ class LoginView(APIView):
         response.data = {
             'jwt':token
         }
-        return response
+        return response   
+         
     def get(self, request):
         token = request.COOKIES.get('jwt')
-        if not token:
-            raise AuthenticationFailed('Not authenticated')
-        try:
-            payload = jwt.decode(token, 'secret', algorithms=['HS256'])
-        except jwt.ExpiredSignatureError:
-            raise AuthenticationFailed('Not authenticated')
-        
+        payload = check_jwt_token(token)
         user = User.objects.filter(id=payload['id']).first()    
         serializer = UserSerializer(user)
         return Response(serializer.data)
+    
+def check_authentication(password, user):
+    if user is None:
+        raise AuthenticationFailed("User not found!")
+    if not user.check_password(password):
+        raise AuthenticationFailed("incorrect password!")
+    
+def check_jwt_token(token):
+    if not token:
+        raise AuthenticationFailed('Not authenticated')
+    try:
+        payload = jwt.decode(token, 'secret', algorithms=['HS256'])
+    except jwt.ExpiredSignatureError:
+        raise AuthenticationFailed('Not authenticated')
+    return payload
 
 class LogoutView(APIView):   
     def post(self, request):
