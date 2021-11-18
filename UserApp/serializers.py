@@ -4,12 +4,12 @@ from UserApp.models import Patient, User
 class PatientSerializer(serializers.ModelSerializer):
     class Meta:
         model=Patient
-        fields=("id","first_name","last_name","created")
+        fields=("occupation","kinship")
         
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model=User
-        fields=("id","first_name","email","password","tipo")
+        fields=("id","email","password","tipo")
         extra_kwargs = {
             'password': {'write_only':True}
         }

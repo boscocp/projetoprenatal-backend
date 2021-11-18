@@ -10,4 +10,5 @@ django-environ==0.8.1
 djangorestframework-simplejwt==5.0.0
 pygments==2.10.0
 mango-jwt==1.3.2
-PyJWT
+PyJWT==2.3.0
+axado.django-localflavor-br==1.0.1
