@@ -1,3 +1,4 @@
+from django.utils.functional import empty
 from rest_framework import generics, serializers
 from rest_framework import response
 from rest_framework.views import APIView
@@ -19,6 +20,23 @@ class PatientView(APIView):
             'patient':'patient creation success'
         }
         return response
+    
+    def get(self, request, pk):
+        patient = Patient.objects.filter(person__cpf=pk).first()
+        serializer = PatientSerializer(patient)
+        return Response(serializer.data)
+    
+    def put(self, request, pk):
+        patient = Patient.objects.filter(person__cpf=pk).first()
+        data = request.data
+        patient.occupation = data["occupation"] 
+        patient.kinship = data['kinship']
+        data['person'] = patient.person.id
+        data['user'] = patient.user.id
+        serializer = PatientSerializer(patient,data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
         
 class PersonView(APIView):
     def post(self, request):

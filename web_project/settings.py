@@ -83,7 +83,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'djongo',
         'CLIENT': {
-            "host": os.getenv("CONECTIONSTRING"),
+            "host": "mongodb+srv://m001-student:bosco-666@sandbox.5mpp4.mongodb.net/myFirstDatabase?retryWrites=true&w=majority",#os.getenv("CONECTIONSTRING"),
             "name": "prenataldb",
             "authMechanism":"SCRAM-SHA-1"
             }

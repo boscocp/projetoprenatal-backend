@@ -27,17 +27,22 @@ class UserSerializer(serializers.ModelSerializer):
         return instance
     
 class PatientSerializer(serializers.ModelSerializer):
-    person = PersonSerializer(required=True)
-    user = UserSerializer(required=True)
+    # person = PersonSerializer(required=True)
+    # user = UserSerializer(required=True)
     class Meta:
         model = Patient
-        fields=("person","user","occupation","kinship")
+        fields=("id","person","user","occupation","kinship")
+        related_fields = ['person','user']
+        
     def create(self, validated_data):
         person_data = validated_data.pop('person')
         user_data = validated_data.pop('user')
         person, p = Person.objects.get_or_create(**person_data)
         user, u = User.objects.get_or_create(**user_data)       
-        patient = Patient.objects.update_or_create(person=person, 
-                                                    user=user, **validated_data)
-
+        patient = Patient.objects.update_or_create(person=person, user=user, **validated_data)
         return patient
+    def update(self, instance, validated_data):
+        for related_object_name in self.Meta.related_fields:
+            related_instance = getattr(instance, related_object_name)
+            related_instance.save()    
+        return super().update(instance, validated_data)
