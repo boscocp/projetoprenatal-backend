@@ -1,19 +1,17 @@
 from os import error
 from rest_framework import serializers
-from UserApp.models import Patient, User, Person
+from UserApp.models import Patient, User, Person, Medic
 
 
 class PersonSerializer(serializers.ModelSerializer):
     class Meta:
         model = Person
         fields = '__all__'
-        #fields=("id","name","cpf","birt_date","civil_state","created")
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model=User
         fields = '__all__'
-        #fields=("id","email","password","tipo")
         extra_kwargs = {
             'password': {'write_only':True}
         }
@@ -27,20 +25,41 @@ class UserSerializer(serializers.ModelSerializer):
         return instance
     
 class PatientSerializer(serializers.ModelSerializer):
-    # person = PersonSerializer(required=True)
-    # user = UserSerializer(required=True)
+    person = PersonSerializer(required=True)
+    user = UserSerializer(required=True)
     class Meta:
         model = Patient
-        fields=("id","person","user","occupation","kinship")
+        fields = '__all__'
         related_fields = ['person','user']
-        
+
     def create(self, validated_data):
         person_data = validated_data.pop('person')
         user_data = validated_data.pop('user')
         person, p = Person.objects.get_or_create(**person_data)
         user, u = User.objects.get_or_create(**user_data)       
-        patient = Patient.objects.update_or_create(person=person, user=user, **validated_data)
-        return patient
+        patient = Patient.objects.create(person=person, user=user, **validated_data)
+        return patient 
+    def update(self, instance, validated_data):
+        for related_object_name in self.Meta.related_fields:
+            related_instance = getattr(instance, related_object_name)
+            related_instance.save()    
+        return super().update(instance, validated_data)
+
+class MedicSerializer(serializers.ModelSerializer):
+    person = PersonSerializer(required=True)
+    user = UserSerializer(required=True)
+    class Meta:
+        model = Medic
+        fields = '__all__'
+        related_fields = ['person','user']
+
+    def create(self, validated_data):
+        person_data = validated_data.pop('person')
+        user_data = validated_data.pop('user')
+        person, p = Person.objects.get_or_create(**person_data)
+        user, u = User.objects.get_or_create(**user_data)       
+        patient = Medic.objects.create(person=person, user=user, **validated_data)
+        return patient 
     def update(self, instance, validated_data):
         for related_object_name in self.Meta.related_fields:
             related_instance = getattr(instance, related_object_name)
