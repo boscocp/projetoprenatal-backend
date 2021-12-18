@@ -48,6 +48,8 @@ class Address(models.Model):
     address = models.CharField(max_length=100)
     number = models.IntegerField()
     zipcode =  models.IntegerField()
+    def __str__(self):
+        return self.address
     
 class ContactInfo(models.Model):
     person = models.OneToOneField(Person,on_delete=models.CASCADE,primary_key=True)

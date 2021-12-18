@@ -1,12 +1,18 @@
 from os import error
 from rest_framework import serializers
-from UserApp.models import Patient, User, Person, Medic
-
+from UserApp.models import Patient, User, Person, Medic, Address
 
 class PersonSerializer(serializers.ModelSerializer):
     class Meta:
         model = Person
         fields = '__all__'
+
+class AddressSerializer(serializers.ModelSerializer):
+    person = PersonSerializer(many=True, read_only=True)
+    class Meta:
+        model = Address
+        fields = '__all__'
+        extra_kwargs = {'persons': {'required': False}}
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:

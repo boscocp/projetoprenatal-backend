@@ -4,12 +4,33 @@ from rest_framework import response
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.exceptions import AuthenticationFailed
-from UserApp.models import Patient, User, Person, Medic
-from UserApp.serializers import PatientSerializer, UserSerializer, PersonSerializer, MedicSerializer
+from UserApp.models import Patient, User, Person, Medic, Address
+from UserApp.serializers import PatientSerializer, UserSerializer, PersonSerializer, MedicSerializer, AddressSerializer
 import jwt, datetime
 from rest_framework import status
 
 # Create your views here.
+class MedicRegisterView(APIView):
+    def post(self, request):
+        request_medic = request.data['medic']
+        request_address = request.data['address']
+        request_medic['tipo'] = 'MED'
+        
+        serializer_medic = MedicSerializer(data=request_medic)
+        serializer_medic.is_valid(raise_exception=True)
+        medic = serializer_medic.save()
+        
+        serializer_address = AddressSerializer(data=request_address)
+        serializer_address.is_valid(raise_exception=True)
+        address = serializer_address.save()    
+        
+        medic.person.address_set.add(address, bulk=False)
+        response = Response()
+        response.data = {
+            'medic':'medic register success',
+            'id':medic.user.id
+        }
+        return response
 class MedicView(APIView):
     def post(self, request):
         request.data['tipo'] = 'MED'
@@ -108,13 +129,13 @@ class PersonView(APIView):
     def get(self, request):
         token = request.COOKIES.get('jwt')
         payload = check_jwt_token(token)
-        person = self.get_person(payload)    
+        person = get_person(payload)    
         serializer = PersonSerializer(person)
         return Response(serializer.data)
     def put(self, request,pk):
         token = request.COOKIES.get('jwt')
         payload = check_jwt_token(token)       
-        person = self.get_person(payload)
+        person = get_person(payload)
         serializer = PersonSerializer(person,data=request.data)
         serializer.is_valid(raise_exception=True)    
         serializer.save()
@@ -122,17 +143,26 @@ class PersonView(APIView):
     def delete(self, request, pk):
         token = request.COOKIES.get('jwt')
         payload = check_jwt_token(token)
-        person = self.get_person(payload)
+        person = get_person(payload)
         person.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-    def get_person(self, payload):
-        if payload['tipo'] == 'PAT':
-            patient = Patient.objects.filter(user__email=payload['email']).first()
-            person = patient.person
-        elif payload['tipo'] == 'MED':
-            medic = Medic.objects.filter(user__email=payload['email']).first()
-            person = medic.person
-        return person
+
+class AddressView(APIView):
+    def post(self, request):
+        token = request.COOKIES.get('jwt')
+        payload = check_jwt_token(token)       
+        person = get_person(payload)
+        data = request.data
+        serializer_address = AddressSerializer(data=data)
+        serializer_address.is_valid(raise_exception=True)
+        address = serializer_address.save()    
+        person.address_set.add(address, bulk=False)
+        response = Response()
+        response.data = {
+            'address':'address creation success'
+        }
+        return response
+
     
 class UserView(APIView):
     def post(self, request):
@@ -169,7 +199,16 @@ class LoginView(APIView):
         user = User.objects.filter(id=payload['email']).first()    
         serializer = UserSerializer(user)
         return Response(serializer.data)
-    
+
+def get_person(payload):
+    if payload['tipo'] == 'PAT':
+        patient = Patient.objects.filter(user__email=payload['email']).first()
+        person = patient.person
+    elif payload['tipo'] == 'MED':
+        medic = Medic.objects.filter(user__email=payload['email']).first()
+        person = medic.person
+    return person
+
 def check_authentication(password, user):
     if user is None:
         raise AuthenticationFailed("User not found!")
