@@ -4,7 +4,7 @@ from rest_framework import response
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.exceptions import AuthenticationFailed
-from UserApp.models import Patient, User, Person, Medic, Address
+from UserApp.models import Patient, User, Person, Medic, Address, Prenatal
 from UserApp.serializers import PatientSerializer, UserSerializer, PersonSerializer, MedicSerializer, AddressSerializer
 import jwt, datetime
 from rest_framework import status
@@ -72,23 +72,42 @@ class MedicView(APIView):
     def delete(self, request):
         token = request.COOKIES.get('jwt')
         payload = check_jwt_token(token)  
-        medic = Medic.objects.filter(user__email=payload['email'])
+        medic = Medic.objects.filter(user__email=payload['email']).first()
         if check_user_jwt(request, medic.user.email):
             medic.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
         raise AuthenticationFailed('Not authenticated')
 class PatientView(APIView):
     def post(self, request):
-        serializer = PatientSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        pat = serializer.save()
-        response = Response()
-        response.data = {
-            'patient':'patient creation success',
-            'id':pat.user.id
-        }
-        return response
-    
+        token = request.COOKIES.get('jwt')
+        payload = check_jwt_token(token)  
+        medic = Medic.objects.filter(user__email=payload['email']).first()
+        if check_user_jwt(request, medic.user.email):
+            patient_serializer = PatientSerializer(data=request.data['patient'])
+            patient_serializer.is_valid(raise_exception=True)
+            pat = patient_serializer.save()
+            
+            serializer_address = AddressSerializer(data=request.data['address'])
+            serializer_address.is_valid(raise_exception=True)
+            address = serializer_address.save()
+            
+            pat.person.address_set.add(address, bulk=False)
+            
+            # prenatal = Prenatal.objects.create(patient=pat, medic = medic, start_date=datetime.datetime.utcnow())
+            prenatal = Prenatal()
+            prenatal.patient = pat
+            prenatal.medic = medic
+            prenatal.start_date = "2021-11-18"
+            prenatal.save()
+            
+            response = Response()
+            response.data = {
+                'patient':'patient creation success',
+                'id':pat.user.id,
+                'prenatalId': prenatal.id
+            }
+            return response
+        raise AuthenticationFailed('Not authenticated')
     def get(self, request, pk):
         patient = Patient.objects.filter(id=int(pk)).first()
         serializer = PatientSerializer(patient)

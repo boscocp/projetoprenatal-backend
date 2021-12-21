@@ -1,6 +1,6 @@
 from os import error
 from rest_framework import serializers
-from UserApp.models import Patient, User, Person, Medic, Address
+from UserApp.models import Patient, User, Person, Medic, Address, Prenatal
 
 class PersonSerializer(serializers.ModelSerializer):
     class Meta:
@@ -66,6 +66,28 @@ class MedicSerializer(serializers.ModelSerializer):
         user, u = User.objects.get_or_create(**user_data)       
         patient = Medic.objects.create(person=person, user=user, **validated_data)
         return patient 
+    def update(self, instance, validated_data):
+        for related_object_name in self.Meta.related_fields:
+            related_instance = getattr(instance, related_object_name)
+            related_instance.save()    
+        return super().update(instance, validated_data)
+    
+class PrenatalSerializer(serializers.ModelSerializer):
+    medic = MedicSerializer(many=True, read_only=True)
+    patient = PatientSerializer(required=True)
+    class Meta:
+        model = Prenatal
+        fields = '__all__'
+        related_fields = ['medic','patient']
+        extra_kwargs = {'medics': {'required': False}}
+        
+    def create(self, validated_data):
+        medic_data = validated_data.pop('medic')
+        patient_data = validated_data.pop('patient')
+        medic, m = Medic.objects.get_or_create(**medic_data)
+        patient, p = Patient.objects.get_or_create(**patient_data)     
+        prenatal = Prenatal.objects.create(medic=medic, patient=patient, **validated_data)
+        return prenatal 
     def update(self, instance, validated_data):
         for related_object_name in self.Meta.related_fields:
             related_instance = getattr(instance, related_object_name)
