@@ -1,4 +1,6 @@
 from os import error
+from UserApp.patientdto import PatientDTO
+from django.core.serializers.json import Serializer
 from rest_framework import serializers
 from UserApp.models import Patient, User, Person, Medic, Address, Prenatal
 
@@ -50,7 +52,13 @@ class PatientSerializer(serializers.ModelSerializer):
             related_instance = getattr(instance, related_object_name)
             related_instance.save()    
         return super().update(instance, validated_data)
-
+    
+class PatientDTOSerializer(serializers.Serializer):
+    name = serializers.CharField(max_length=200)
+    cpf = serializers.CharField(max_length=200)
+    birt_date = serializers.CharField(max_length=200)
+    email = serializers.EmailField()
+    
 class MedicSerializer(serializers.ModelSerializer):
     person = PersonSerializer(required=True)
     user = UserSerializer(required=True)
@@ -73,7 +81,7 @@ class MedicSerializer(serializers.ModelSerializer):
         return super().update(instance, validated_data)
     
 class PrenatalSerializer(serializers.ModelSerializer):
-    medic = MedicSerializer(many=True, read_only=True)
+    medic = MedicSerializer(source="medics", many=True, read_only=True)
     patient = PatientSerializer(required=True)
     class Meta:
         model = Prenatal

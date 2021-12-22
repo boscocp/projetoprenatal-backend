@@ -1,11 +1,10 @@
 from django.utils.functional import empty
-from rest_framework import generics, serializers
-from rest_framework import response
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.exceptions import AuthenticationFailed
+from UserApp.patientdto import PatientDTO
 from UserApp.models import Patient, User, Person, Medic, Address, Prenatal
-from UserApp.serializers import PatientSerializer, UserSerializer, PersonSerializer, MedicSerializer, AddressSerializer
+from UserApp.serializers import PatientSerializer, UserSerializer, PersonSerializer, MedicSerializer, AddressSerializer, PrenatalSerializer,PatientDTOSerializer
 import jwt, datetime
 from rest_framework import status
 
@@ -93,11 +92,10 @@ class PatientView(APIView):
             
             pat.person.address_set.add(address, bulk=False)
             
-            # prenatal = Prenatal.objects.create(patient=pat, medic = medic, start_date=datetime.datetime.utcnow())
             prenatal = Prenatal()
             prenatal.patient = pat
             prenatal.medic = medic
-            prenatal.start_date = "2021-11-18"
+            prenatal.start_date = datetime.datetime.utcnow()
             prenatal.save()
             
             response = Response()
@@ -108,12 +106,29 @@ class PatientView(APIView):
             }
             return response
         raise AuthenticationFailed('Not authenticated')
-    def get(self, request, pk):
-        patient = Patient.objects.filter(id=int(pk)).first()
-        serializer = PatientSerializer(patient)
-        if check_user_jwt(request, patient.user.email):
-            return Response(serializer.data)
+    def get(self, request,pk):
+        token = request.COOKIES.get('jwt')
+        payload = check_jwt_token(token)  
+        medic = Medic.objects.filter(user__email=payload['email']).first()
+        if check_user_jwt(request, medic.user.email):
+            id = int(pk)
+            if pk==0:
+                patients = []
+                prenatais = Prenatal.objects.filter(medic=medic)
+                for prenatal in prenatais:
+                    patients.append(PatientDTO(prenatal.patient.person.name, 
+                                               prenatal.patient.person.cpf,
+                                               prenatal.patient.person.birt_date,
+                                               prenatal.patient.user.email))
+                serializer = PatientDTOSerializer(patients,many=True)
+                return Response(serializer.data)
+
+            else:
+                patient = Patient.objects.filter(id=id).first()
+                serializer = PatientSerializer(patient)
+                return Response(serializer.data)
         raise AuthenticationFailed('Not authenticated')
+
     def put(self, request, pk):
         patient = Patient.objects.filter(id=int(pk)).first()
         if check_user_jwt(request, patient.user.email):
