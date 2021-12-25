@@ -3,8 +3,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.exceptions import AuthenticationFailed
 from UserApp.patientdto import PatientDTO
-from UserApp.models import Patient, User, Person, Medic, Address, Prenatal
-from UserApp.serializers import PatientSerializer, UserSerializer, PersonSerializer, MedicSerializer, AddressSerializer, PrenatalSerializer,PatientDTOSerializer
+from UserApp.models import *
+from UserApp.serializers import *
 import jwt, datetime
 from rest_framework import status
 
@@ -116,7 +116,8 @@ class PatientView(APIView):
                 patients = []
                 prenatais = Prenatal.objects.filter(medic=medic)
                 for prenatal in prenatais:
-                    patients.append(PatientDTO(prenatal.patient.person.name, 
+                    patients.append(PatientDTO(prenatal.patient.id,
+                                               prenatal.patient.person.name, 
                                                prenatal.patient.person.cpf,
                                                prenatal.patient.person.birt_date,
                                                prenatal.patient.user.email))
@@ -196,7 +197,52 @@ class AddressView(APIView):
             'address':'address creation success'
         }
         return response
-
+    def get(self, request,pk):
+        token = request.COOKIES.get('jwt')
+        payload = check_jwt_token(token)  
+        medic = Medic.objects.filter(user__email=payload['email']).first()
+        if check_user_jwt(request, medic.user.email):
+            id = int(pk)
+            patient = Patient.objects.filter(id=id).first()
+            address = Address.objects.filter(person=patient.person)
+            serializer = AddressSerializer(address, many=True)
+            return Response(serializer.data)
+        raise AuthenticationFailed('Not authenticated')
+    
+class AppointmentView(APIView):
+    def post(self, request):
+        token = request.COOKIES.get('jwt')
+        payload = check_jwt_token(token)  
+        medic = Medic.objects.filter(user__email=payload['email']).first()
+        if check_user_jwt(request, medic.user.email):
+            id = int(request.data['patient_id'])
+            patient = Patient.objects.filter(id=id).first()
+            pre = Prenatal.objects.filter(patient=patient).first()
+            print(pre.patient.person.name)
+            data = request.data['appointment']
+            serializer = AppointmentSerializer(data=data)
+            serializer.is_valid(raise_exception=True)
+            appointmentInstance = serializer.save()
+            pre.appointment_set.add(appointmentInstance, bulk=False)
+            response = Response()
+            response.data = {
+                'appointment':'appointment creation success',
+                'patientId':patient.user.id,
+                'prenatalId': pre.id,
+                'appointmentId' : appointmentInstance.id
+            }
+            return response
+        raise AuthenticationFailed('Not authenticated')
+    def get(self, request,pk):
+        token = request.COOKIES.get('jwt')
+        payload = check_jwt_token(token)  
+        medic = Medic.objects.filter(user__email=payload['email']).first()
+        if check_user_jwt(request, medic.user.email):
+            id = int(pk)
+            appointment = Appointment.objects.filter(prenatal__patient__id=id)
+            serializer = AppointmentSerializer(appointment, many=True)
+            return Response(serializer.data)
+        raise AuthenticationFailed('Not authenticated')
     
 class UserView(APIView):
     def post(self, request):

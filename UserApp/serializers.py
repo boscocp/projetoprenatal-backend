@@ -2,7 +2,7 @@ from os import error
 from UserApp.patientdto import PatientDTO
 from django.core.serializers.json import Serializer
 from rest_framework import serializers
-from UserApp.models import Patient, User, Person, Medic, Address, Prenatal
+from UserApp.models import *
 
 class PersonSerializer(serializers.ModelSerializer):
     class Meta:
@@ -10,7 +10,7 @@ class PersonSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class AddressSerializer(serializers.ModelSerializer):
-    person = PersonSerializer(many=True, read_only=True)
+    person = PersonSerializer(source="persons", many=True, read_only=True)
     class Meta:
         model = Address
         fields = '__all__'
@@ -54,6 +54,7 @@ class PatientSerializer(serializers.ModelSerializer):
         return super().update(instance, validated_data)
     
 class PatientDTOSerializer(serializers.Serializer):
+    id = serializers.CharField(max_length=10)
     name = serializers.CharField(max_length=200)
     cpf = serializers.CharField(max_length=200)
     birt_date = serializers.CharField(max_length=200)
@@ -81,7 +82,7 @@ class MedicSerializer(serializers.ModelSerializer):
         return super().update(instance, validated_data)
     
 class PrenatalSerializer(serializers.ModelSerializer):
-    medic = MedicSerializer(source="medics", many=True, read_only=True)
+    medic = MedicSerializer(source="medics",many=True, read_only=True)
     patient = PatientSerializer(required=True)
     class Meta:
         model = Prenatal
@@ -101,3 +102,10 @@ class PrenatalSerializer(serializers.ModelSerializer):
             related_instance = getattr(instance, related_object_name)
             related_instance.save()    
         return super().update(instance, validated_data)
+    
+class AppointmentSerializer(serializers.ModelSerializer):
+    prenatal = PrenatalSerializer(source="prenatals",many=True, read_only=True)
+    class Meta:
+        model = Appointment
+        fields = '__all__'
+        extra_kwargs = {'prenatals': {'required': False}}

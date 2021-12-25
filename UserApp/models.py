@@ -81,7 +81,7 @@ class Medic(models.Model):
     
 class Prenatal(models.Model):
     patient = models.OneToOneField(Patient,on_delete=models.DO_NOTHING)
-    medic = models.ForeignKey(Medic,on_delete=models.DO_NOTHING, related_name='medic')
+    medic = models.ForeignKey(Medic,on_delete=models.DO_NOTHING)
     created = models.DateTimeField(auto_now_add=True)
     start_date = models.DateField(blank=False)
     

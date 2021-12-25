@@ -1,5 +1,6 @@
 class PatientDTO:
-    def __init__(self, name, cpf, birt_date, email):
+    def __init__(self, id, name, cpf, birt_date, email):
+        self.id = id
         self.name = name
         self.cpf = cpf
         self.birt_date = birt_date
