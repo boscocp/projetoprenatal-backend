@@ -15,6 +15,7 @@ urlpatterns = [
     path('address/', views.AddressView.as_view()),
     path('address/<int:pk>', views.AddressView.as_view()),
     path('appointment/', views.AppointmentView.as_view()),
+    path('appointments/<int:pk>', views.AppointmentsView.as_view()),
     path('appointment/<int:pk>', views.AppointmentView.as_view()),
     path('singup/', views.MedicRegisterView.as_view()),
 ]

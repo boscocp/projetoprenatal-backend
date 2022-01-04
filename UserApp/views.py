@@ -239,11 +239,21 @@ class AppointmentView(APIView):
         medic = Medic.objects.filter(user__email=payload['email']).first()
         if check_user_jwt(request, medic.user.email):
             id = int(pk)
+            appointment = Appointment.objects.filter(id=id).first()
+            serializer = AppointmentSerializer(appointment)
+            return Response(serializer.data)
+        raise AuthenticationFailed('Not authenticated')
+class AppointmentsView(APIView):
+     def get(self, request,pk):
+        token = request.COOKIES.get('jwt')
+        payload = check_jwt_token(token)  
+        medic = Medic.objects.filter(user__email=payload['email']).first()
+        if check_user_jwt(request, medic.user.email):
+            id = int(pk)
             appointment = Appointment.objects.filter(prenatal__patient__id=id)
             serializer = AppointmentSerializer(appointment, many=True)
             return Response(serializer.data)
         raise AuthenticationFailed('Not authenticated')
-    
 class UserView(APIView):
     def post(self, request):
         serializer = UserSerializer(data=request.data)
@@ -269,7 +279,10 @@ class LoginView(APIView):
         response = Response()
         response.set_cookie(key='jwt',value=token,httponly=True)
         response.data = {
-            'jwt':token
+            'jwt':token,
+            'userName': get_person(payload).name,
+            'email': email,
+            'tipo': user.tipo
         }
         return response   
          
