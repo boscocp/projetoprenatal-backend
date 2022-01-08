@@ -47,11 +47,30 @@ class PatientSerializer(serializers.ModelSerializer):
         user, u = User.objects.get_or_create(**user_data)       
         patient = Patient.objects.create(person=person, user=user, **validated_data)
         return patient 
-    def update(self, instance, validated_data):
-        for related_object_name in self.Meta.related_fields:
-            related_instance = getattr(instance, related_object_name)
-            related_instance.save()    
-        return super().update(instance, validated_data)
+    
+    @staticmethod
+    def updateCuston(instance, data):
+        dataPatient = data['patient']
+        person = Person.objects.get(id=instance.person.id)
+        serializerPerson = PersonSerializer(person,data=dataPatient['person'])
+        serializerPerson.is_valid(raise_exception=True)
+        serializerPerson.save()
+        user = User.objects.get(id=instance.user.id)
+        dataUser = dataPatient['user']
+        if 'password' not in dataUser or dataUser['password']=='':
+            dataUser['password']=user.password
+            
+        serializerUser = UserSerializer(user,data=dataPatient['user'])
+        serializerUser.is_valid(raise_exception=True)
+        serializerUser.save()
+        address = Address.objects.filter(person__id=instance.person.id).first()
+        serializerAddress=AddressSerializer(address,data=data['address'])
+        serializerAddress.is_valid(raise_exception=True)
+        serializerAddress.save()
+        instance.occupation = dataPatient['occupation'] 
+        instance.kinship = dataPatient['kinship']
+        instance.save()
+        return instance
     
 class PatientDTOSerializer(serializers.Serializer):
     id = serializers.CharField(max_length=10)
@@ -71,7 +90,7 @@ class MedicSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         person_data = validated_data.pop('person')
         user_data = validated_data.pop('user')
-        person, p = Person.objects.get_or_create(**person_data)
+        person, p = Person.objects.create(**person_data)
         user, u = User.objects.get_or_create(**user_data)       
         patient = Medic.objects.create(person=person, user=user, **validated_data)
         return patient 

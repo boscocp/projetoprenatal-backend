@@ -132,15 +132,12 @@ class PatientView(APIView):
 
     def put(self, request, pk):
         patient = Patient.objects.filter(id=int(pk)).first()
-        if check_user_jwt(request, patient.user.email):
+        token = request.COOKIES.get('jwt')
+        payload = check_jwt_token(token)  
+        medic = Medic.objects.filter(user__email=payload['email']).first()
+        if check_user_jwt(request, medic.user.email):
             data = request.data
-            patient.occupation = data["occupation"] 
-            patient.kinship = data['kinship']
-            data['person'] = patient.person.id
-            data['user'] = patient.user.id
-            serializer = PatientSerializer(patient,data=data)
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
+            PatientSerializer.updateCuston(instance=patient,data=data)
             response = Response()
             response.data = {
                 'patient':'patient update success'
@@ -149,9 +146,13 @@ class PatientView(APIView):
         raise AuthenticationFailed('Not authenticated')
            
     def delete(self, request, pk):
-        patient = Patient.objects.filter(id=int(pk))
-        if check_user_jwt(request, patient.user.email):
-            patient.delete()
+        token = request.COOKIES.get('jwt')
+        payload = check_jwt_token(token)  
+        medic = Medic.objects.filter(user__email=payload['email']).first()
+        if check_user_jwt(request, medic.user.email):
+            id = int(pk)
+            Patient.objects.filter(id=id).delete()
+            Prenatal.objects.filter(patient__id=id).delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
         raise AuthenticationFailed('Not authenticated')
     
