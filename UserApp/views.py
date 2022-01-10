@@ -217,9 +217,7 @@ class AppointmentView(APIView):
         medic = Medic.objects.filter(user__email=payload['email']).first()
         if check_user_jwt(request, medic.user.email):
             id = int(request.data['patient_id'])
-            patient = Patient.objects.filter(id=id).first()
-            pre = Prenatal.objects.filter(patient=patient).first()
-            print(pre.patient.person.name)
+            pre = Prenatal.objects.filter(patient__id=id).first()
             data = request.data['appointment']
             serializer = AppointmentSerializer(data=data)
             serializer.is_valid(raise_exception=True)
@@ -228,7 +226,7 @@ class AppointmentView(APIView):
             response = Response()
             response.data = {
                 'appointment':'appointment creation success',
-                'patientId':patient.user.id,
+                'patientId':id,
                 'prenatalId': pre.id,
                 'appointmentId' : appointmentInstance.id
             }
