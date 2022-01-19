@@ -128,3 +128,77 @@ class AppointmentSerializer(serializers.ModelSerializer):
         model = Appointment
         fields = '__all__'
         extra_kwargs = {'prenatals': {'required': False}}
+        
+class MedicalExamSerializer(serializers.ModelSerializer):
+    prenatal = PrenatalSerializer(source="prenatals",many=True, read_only=True)
+    class Meta:
+        model = MedicalExam
+        fields = '__all__'
+        related_fields = ['prenatal']
+        extra_kwargs = {'prenatals': {'required': False}}        
+        
+    def create(self, validated_data): 
+        prenatal_data = validated_data.pop('prenatal') 
+        prenatal = Prenatal.objects.get(**prenatal_data)  
+        exam = MedicalExam.objects.get_or_create(prenatal=prenatal, **validated_data)
+        return exam 
+    def update(self, instance, validated_data):
+        for related_object_name in self.Meta.related_fields:
+            related_instance = getattr(instance, related_object_name)
+            related_instance.save()    
+        return super().update(instance, validated_data)
+
+class NumericMedicalExamSerializer(serializers.ModelSerializer):
+    exam = MedicalExamSerializer(required=True)
+    class Meta:
+        model = NumericMedicalExam
+        fields = '__all__'
+        related_fields = ['exam']
+        
+    def create(self, validated_data):
+        exam_data = validated_data.pop('exam')  
+        exam = MedicalExam.objects.create(**exam_data)
+        numeric_exam = NumericMedicalExam.objects.create(exam=exam, **validated_data)
+        return numeric_exam
+    def update(self, instance, validated_data):
+        
+        for related_object_name in self.Meta.related_fields:
+            related_instance = getattr(instance, related_object_name)
+            serializer = MedicalExamSerializer(related_instance,validated_data[related_object_name])
+            serializer.is_valid(raise_exception=True) 
+            serializer.save()
+        instance.value = validated_data['value']
+        instance.save()
+        return instance
+        
+class ReagentExamSerializer(serializers.ModelSerializer):
+    exam = MedicalExamSerializer(required=True)
+    class Meta:
+        model = ReagentExam
+        fields = '__all__'
+    def create(self, validated_data):
+        exam_data = validated_data.pop('exam')  
+        exam = MedicalExam.objects.create(**exam_data)
+        numeric_exam = ReagentExam.objects.create(exam=exam, **validated_data)
+        return numeric_exam
+    def update(self, instance, validated_data):
+        for related_object_name in self.Meta.related_fields:
+            related_instance = getattr(instance, related_object_name)
+            related_instance.save()    
+        return super().update(instance, validated_data)
+    
+class OtherExamSerializer(serializers.ModelSerializer):
+    exam = MedicalExamSerializer(required=True)
+    class Meta:
+        model = OtherExam
+        fields = '__all__'
+    def create(self, validated_data):
+        exam_data = validated_data.pop('exam')  
+        exam = MedicalExam.objects.create(**exam_data)
+        numeric_exam = OtherExam.objects.create(exam=exam, **validated_data)
+        return numeric_exam
+    def update(self, instance, validated_data):
+        for related_object_name in self.Meta.related_fields:
+            related_instance = getattr(instance, related_object_name)
+            related_instance.save()    
+        return super().update(instance, validated_data)

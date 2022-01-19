@@ -100,8 +100,7 @@ class Appointment(models.Model):
     substance_use = models.CharField(max_length=200)
 
 class MedicalExam(models.Model):
-    patient = models.ForeignKey(Person,on_delete=models.DO_NOTHING)
-    medic = models.ForeignKey(Medic,on_delete=models.DO_NOTHING)
+    prenatal = models.ForeignKey(Prenatal,on_delete=models.CASCADE)
     created = models.DateTimeField(auto_now_add=True)
     date = models.DateField(blank=False)
     name = models.CharField(max_length=80)

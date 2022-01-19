@@ -132,10 +132,7 @@ class PatientView(APIView):
 
     def put(self, request, pk):
         patient = Patient.objects.filter(id=int(pk)).first()
-        token = request.COOKIES.get('jwt')
-        payload = check_jwt_token(token)  
-        medic = Medic.objects.filter(user__email=payload['email']).first()
-        if check_user_jwt(request, medic.user.email):
+        if isAuthenticated(request):
             data = request.data
             PatientSerializer.updateCuston(instance=patient,data=data)
             response = Response()
@@ -146,10 +143,7 @@ class PatientView(APIView):
         raise AuthenticationFailed('Not authenticated')
            
     def delete(self, request, pk):
-        token = request.COOKIES.get('jwt')
-        payload = check_jwt_token(token)  
-        medic = Medic.objects.filter(user__email=payload['email']).first()
-        if check_user_jwt(request, medic.user.email):
+        if isAuthenticated(request):
             id = int(pk)
             Patient.objects.filter(id=id).delete()
             Prenatal.objects.filter(patient__id=id).delete()
@@ -199,10 +193,7 @@ class AddressView(APIView):
         }
         return response
     def get(self, request,pk):
-        token = request.COOKIES.get('jwt')
-        payload = check_jwt_token(token)  
-        medic = Medic.objects.filter(user__email=payload['email']).first()
-        if check_user_jwt(request, medic.user.email):
+        if isAuthenticated(request):
             id = int(pk)
             patient = Patient.objects.filter(id=id).first()
             address = Address.objects.filter(person=patient.person)
@@ -212,10 +203,7 @@ class AddressView(APIView):
     
 class AppointmentView(APIView):
     def post(self, request):
-        token = request.COOKIES.get('jwt')
-        payload = check_jwt_token(token)  
-        medic = Medic.objects.filter(user__email=payload['email']).first()
-        if check_user_jwt(request, medic.user.email):
+        if isAuthenticated(request):
             id = int(request.data['patient_id'])
             pre = Prenatal.objects.filter(patient__id=id).first()
             data = request.data['appointment']
@@ -233,26 +221,80 @@ class AppointmentView(APIView):
             return response
         raise AuthenticationFailed('Not authenticated')
     def get(self, request,pk):
-        token = request.COOKIES.get('jwt')
-        payload = check_jwt_token(token)  
-        medic = Medic.objects.filter(user__email=payload['email']).first()
-        if check_user_jwt(request, medic.user.email):
+        if isAuthenticated(request):
             id = int(pk)
             appointment = Appointment.objects.filter(id=id).first()
             serializer = AppointmentSerializer(appointment)
             return Response(serializer.data)
         raise AuthenticationFailed('Not authenticated')
+    def put(self, request,pk):
+        if isAuthenticated(request):
+            id = int(pk)
+            appointment = Appointment.objects.get(id=id)
+            serializer = AppointmentSerializer(appointment,data=request.data)
+            serializer.is_valid(raise_exception=True)    
+            serializer.save()
+            response = Response()
+            response.data = {
+                'appointment':'appointment update success'
+            }
+            return response
+        raise AuthenticationFailed('Not authenticated')
+    def delete(self, request, pk):
+        if isAuthenticated(request):
+            id = int(pk)
+            Appointment.objects.filter(id=id).delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        raise AuthenticationFailed('Not authenticated')
+
 class AppointmentsView(APIView):
      def get(self, request,pk):
-        token = request.COOKIES.get('jwt')
-        payload = check_jwt_token(token)  
-        medic = Medic.objects.filter(user__email=payload['email']).first()
-        if check_user_jwt(request, medic.user.email):
+        if isAuthenticated(request):
             id = int(pk)
             appointment = Appointment.objects.filter(prenatal__patient__id=id)
             serializer = AppointmentSerializer(appointment, many=True)
             return Response(serializer.data)
         raise AuthenticationFailed('Not authenticated')
+
+class NumericExamView(APIView):
+    def get(self, request,pk):
+        if isAuthenticated(request):
+            id = int(pk)
+            exams = NumericMedicalExam.objects.filter(exam__prenatal__id=id)
+            serializer = NumericMedicalExamSerializer(exams, many=True)
+            return Response(serializer.data)
+        raise AuthenticationFailed('Not authenticated')
+    def post(self, request):
+        if isAuthenticated(request):
+            id = int(request.data['patient_id'])
+            pre = Prenatal.objects.filter(patient__id=id).first()
+            serializer = NumericMedicalExamSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            exam_instance = serializer.save()
+            pre.medicalexam_set.add(exam_instance.exam, bulk=False)
+            return Response(serializer.data)
+        raise AuthenticationFailed('Not authenticated')
+    def put(self, request,pk):
+        if isAuthenticated(request):
+            id = int(pk)
+            numeric_exam = NumericMedicalExam.objects.get(id=id)
+            serializer = NumericMedicalExamSerializer(numeric_exam,data=request.data)
+            serializer.is_valid(raise_exception=True)    
+            serializer.save()
+            response = Response()
+            response.data = {
+                'exam':'exam update success'
+            }
+            return response
+        raise AuthenticationFailed('Not authenticated')
+    def delete(self, request, pk):
+        if isAuthenticated(request):
+            id = int(pk)
+            NumericMedicalExam.objects.filter(id=id).delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        raise AuthenticationFailed('Not authenticated')
+    
+    
 class UserView(APIView):
     def post(self, request):
         serializer = UserSerializer(data=request.data)
@@ -328,6 +370,11 @@ def check_user_jwt(request, email):
     except jwt.ExpiredSignatureError:
         raise AuthenticationFailed('Not authenticated')
     return False
+def isAuthenticated(request):
+    token = request.COOKIES.get('jwt')
+    payload = check_jwt_token(token)
+    medic = Medic.objects.filter(user__email=payload['email']).first()
+    return check_user_jwt(request, medic.user.email)
 
 class LogoutView(APIView):   
     def post(self, request):

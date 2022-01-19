@@ -18,5 +18,7 @@ urlpatterns = [
     path('appointments/<int:pk>', views.AppointmentsView.as_view()),
     path('appointment/<int:pk>', views.AppointmentView.as_view()),
     path('singup/', views.MedicRegisterView.as_view()),
+    path('numericexam/', views.NumericExamView.as_view()),
+    path('numericexam/<int:pk>', views.NumericExamView.as_view()),
 ]
 urlpatterns = format_suffix_patterns(urlpatterns)
