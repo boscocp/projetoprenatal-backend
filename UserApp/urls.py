@@ -20,5 +20,9 @@ urlpatterns = [
     path('singup/', views.MedicRegisterView.as_view()),
     path('numericexam/', views.NumericExamView.as_view()),
     path('numericexam/<int:pk>', views.NumericExamView.as_view()),
+    path('reagentexam/', views.ReagentExamView.as_view()),
+    path('reagentexam/<int:pk>', views.ReagentExamView.as_view()),
+    path('otherexam/', views.OtherExamView.as_view()),
+    path('otherexam/<int:pk>', views.OtherExamView.as_view()),
 ]
 urlpatterns = format_suffix_patterns(urlpatterns)
