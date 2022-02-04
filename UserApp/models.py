@@ -84,6 +84,13 @@ class Prenatal(models.Model):
     medic = models.ForeignKey(Medic,on_delete=models.DO_NOTHING)
     created = models.DateTimeField(auto_now_add=True)
     start_date = models.DateField(blank=False)
+    last_menstrual_period = models.DateField()
+    ultrasound_gestational_start = models.DateField()
+    don = models.CharField(max_length=80)
+    dopp = models.CharField(max_length=80)
+    dopa = models.CharField(max_length=80)
+    dg = models.CharField(max_length=80)
+    dcc = models.CharField(max_length=80)
     
 class Appointment(models.Model):
     prenatal = models.ForeignKey(Prenatal,on_delete=models.CASCADE)
@@ -93,12 +100,14 @@ class Appointment(models.Model):
     ig = models.CharField(max_length=80)
     pa = models.CharField(max_length=80)
     edema = models.CharField(max_length=80)
-    av = models.CharField(max_length=80)
+    au = models.CharField(max_length=80)
     bcf = models.CharField(max_length=80)
     complication = models.CharField(max_length=200)
     cd = models.CharField(max_length=80)
     substance_use = models.CharField(max_length=200)
-
+    gestational_age_last_menstrual_period = models.CharField(max_length=80)
+    gestational_age_ultrasound = models.CharField(max_length=80)
+    
 class MedicalExam(models.Model):
     prenatal = models.ForeignKey(Prenatal,on_delete=models.CASCADE)
     created = models.DateTimeField(auto_now_add=True)

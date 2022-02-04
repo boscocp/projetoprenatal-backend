@@ -76,6 +76,53 @@ class MedicView(APIView):
             medic.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
         raise AuthenticationFailed('Not authenticated')
+class PrenatalView(APIView):
+    def get(self, request,pk):
+        token = request.COOKIES.get('jwt')
+        payload = check_jwt_token(token)  
+        medic = Medic.objects.filter(user__email=payload['email']).first()
+        if check_user_jwt(request, medic.user.email):
+            id = int(pk)
+            if pk==0:
+                prenatais = Prenatal.objects.filter(medic=medic)
+                serializer = PrenatalSerializer(prenatais,many=True)
+                return Response(serializer.data)
+            else:
+                prenatal = Prenatal.objects.filter(patient__id=id).first()
+                serializer = PrenatalSerializer(prenatal)
+                return Response(serializer.data)
+        raise AuthenticationFailed('Not authenticated')         
+    def put(self, request, pk):
+        token = request.COOKIES.get('jwt')
+        payload = check_jwt_token(token)  
+        medic = Medic.objects.filter(user__email=payload['email']).first()
+        if check_user_jwt(request, medic.user.email):
+            prenatal_data = request.data
+            prenatal = Prenatal.objects.get(id=int(pk))
+            # prenatal_serializer = PrenatalSerializer(prenatal, prenatal_data)
+            # prenatal_serializer.is_valid(raise_exception=True)
+            # prenatal_serializer.save()
+            if('start_date' in prenatal_data):
+                prenatal.start_date = prenatal_data['start_date']
+            if('ultrasound_gestational_start' in prenatal_data 
+               and prenatal_data['ultrasound_gestational_start'] != ''):
+                prenatal.ultrasound_gestational_start = prenatal_data['ultrasound_gestational_start']
+            if('last_menstrual_period' in prenatal_data 
+               and prenatal_data['last_menstrual_period'] != ''):
+                prenatal.last_menstrual_period = prenatal_data['last_menstrual_period']
+            if('don' in prenatal_data):
+                prenatal.don = prenatal_data['don']
+                prenatal.dopp = prenatal_data['dopp']
+                prenatal.dopa = prenatal_data['dopa']
+                prenatal.dg = prenatal_data['dg']
+                prenatal.dcc = prenatal_data['dcc']
+            prenatal.save()
+            response = Response()
+            response.data = {
+                'patient':'prenatal update success'
+            }
+            return response
+        raise AuthenticationFailed('Not authenticated')
 class PatientView(APIView):
     def post(self, request):
         token = request.COOKIES.get('jwt')
@@ -92,10 +139,21 @@ class PatientView(APIView):
             
             pat.person.address_set.add(address, bulk=False)
             
+            prenatal_data = request.data['prenatal']
             prenatal = Prenatal()
             prenatal.patient = pat
             prenatal.medic = medic
-            prenatal.start_date = datetime.datetime.utcnow()
+            if('start_date' in prenatal_data):
+                prenatal.start_date = prenatal_data['start_date']
+            else:
+                prenatal.start_date = datetime.datetime.utcnow()
+            # prenatal.last_menstrual_period = prenatal_data['last_menstrual_period']
+            # prenatal.ultrasound_gestational_start = prenatal_data['ultrasound_gestational_start']
+            # prenatal.don = prenatal_data['don']
+            # prenatal.dopp = prenatal_data['dopp']
+            # prenatal.dopa = prenatal_data['dopa']
+            # prenatal.dg = prenatal_data['dg']
+            # prenatal.dcc = prenatal_data['dcc']
             prenatal.save()
             
             response = Response()

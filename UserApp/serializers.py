@@ -112,7 +112,7 @@ class PrenatalSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         medic_data = validated_data.pop('medic')
         patient_data = validated_data.pop('patient')
-        medic, m = Medic.objects.get_or_create(**medic_data)
+        medic = Medic.objects.get(**medic_data)
         patient, p = Patient.objects.get_or_create(**patient_data)     
         prenatal = Prenatal.objects.create(medic=medic, patient=patient, **validated_data)
         return prenatal 
