@@ -1,3 +1,4 @@
+from pickle import FALSE
 from django.utils.functional import empty
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -258,7 +259,29 @@ class AddressView(APIView):
             serializer = AddressSerializer(address, many=True)
             return Response(serializer.data)
         raise AuthenticationFailed('Not authenticated')
-    
+class AddendumView(APIView):
+    def post(self, request):
+        if isAuthenticated(request):
+            id = int(request.data['appointment_id'])
+            appointment = Appointment.objects.filter(id=id).first()
+            data = request.data['addendum']
+            serializer = AddendumSerializer(data=data)
+            serializer.is_valid(raise_exception=True)
+            addendum_instance = serializer.save()
+            appointment.addendum_set.add(addendum_instance, bulk=False)
+            response = Response()
+            response.data = {
+                'address':'addendum creation success'
+            }
+            return response
+        raise AuthenticationFailed('Not authenticated')
+    def get(self, request,pk):
+        if isAuthenticated(request):
+            id = int(pk)
+            addendums = Addendum.objects.filter(appointment__id=id)
+            serializer = AddendumSerializer(addendums, many=True)
+            return Response(serializer.data)
+        raise AuthenticationFailed('Not authenticated')
 class AppointmentView(APIView):
     def post(self, request):
         if isAuthenticated(request):

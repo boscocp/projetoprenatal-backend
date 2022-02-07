@@ -26,5 +26,7 @@ urlpatterns = [
     path('otherexam/<int:pk>', views.OtherExamView.as_view()),
     path('prenatal/', views.PrenatalView.as_view()),
     path('prenatal/<int:pk>', views.PrenatalView.as_view()),
+    path('addendum/', views.AddendumView.as_view()),
+    path('addendum/<int:pk>', views.AddendumView.as_view()),
 ]
 urlpatterns = format_suffix_patterns(urlpatterns)

@@ -129,6 +129,13 @@ class AppointmentSerializer(serializers.ModelSerializer):
         fields = '__all__'
         extra_kwargs = {'prenatals': {'required': False}}
         
+class AddendumSerializer(serializers.ModelSerializer):
+    appointment = AppointmentSerializer(source="appointments",many=True, read_only=True)
+    class Meta:
+        model = Addendum
+        fields = '__all__'
+        extra_kwargs = {'appointments': {'required': False}}      
+          
 class MedicalExamSerializer(serializers.ModelSerializer):
     prenatal = PrenatalSerializer(source="prenatals",many=True, read_only=True)
     class Meta:

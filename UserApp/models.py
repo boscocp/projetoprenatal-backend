@@ -108,6 +108,11 @@ class Appointment(models.Model):
     gestational_age_last_menstrual_period = models.CharField(max_length=80)
     gestational_age_ultrasound = models.CharField(max_length=80)
     
+class Addendum(models.Model):
+    appointment = models.ForeignKey(Appointment,on_delete=models.CASCADE)
+    created = models.DateTimeField(auto_now_add=True)
+    info = models.CharField(max_length=200)
+    
 class MedicalExam(models.Model):
     prenatal = models.ForeignKey(Prenatal,on_delete=models.CASCADE)
     created = models.DateTimeField(auto_now_add=True)
