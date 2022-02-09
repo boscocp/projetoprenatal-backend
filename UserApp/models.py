@@ -103,10 +103,8 @@ class Appointment(models.Model):
     au = models.CharField(max_length=80)
     bcf = models.CharField(max_length=80)
     complication = models.CharField(max_length=200)
-    cd = models.CharField(max_length=80)
+    cd = models.CharField(max_length=500)
     substance_use = models.CharField(max_length=200)
-    gestational_age_last_menstrual_period = models.CharField(max_length=80)
-    gestational_age_ultrasound = models.CharField(max_length=80)
     
 class Addendum(models.Model):
     appointment = models.ForeignKey(Appointment,on_delete=models.CASCADE)
@@ -118,6 +116,14 @@ class MedicalExam(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     date = models.DateField(blank=False)
     name = models.CharField(max_length=80)
+    
+class UltrasoundExam(models.Model):
+    exam = models.OneToOneField(MedicalExam,on_delete=models.CASCADE)
+    ig = models.CharField(max_length=100)
+    pfe = models.CharField(max_length=200)
+    la = models.CharField(max_length=200)
+    placenta = models.CharField(max_length=200)
+    other_info = models.CharField(max_length=600)
 
 class NumericMedicalExam(models.Model):
     exam = models.OneToOneField(MedicalExam,on_delete=models.CASCADE)

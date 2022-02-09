@@ -194,6 +194,26 @@ class ReagentExamSerializer(serializers.ModelSerializer):
         instance.value = validated_data['value']
         instance.save()
         return instance
+
+class UltrasoundExamSerializer(serializers.ModelSerializer):
+    exam = MedicalExamSerializer(required=True)
+    class Meta:
+        model = UltrasoundExam
+        fields = '__all__'
+    def create(self, validated_data):
+        exam_data = validated_data.pop('exam')  
+        exam = MedicalExam.objects.create(**exam_data)
+        exam.name = "ultrassound"
+        ultrassound_exam = UltrasoundExam.objects.create(exam=exam, **validated_data)
+        return ultrassound_exam
+    def update(self, instance, validated_data):
+        related_instance = getattr(instance, 'exam')
+        serializer = MedicalExamSerializer(related_instance,validated_data['exam'])
+        serializer.is_valid(raise_exception=True) 
+        serializer.save()
+        instance.value = validated_data['value']
+        instance.save()
+        return instance
     
 class OtherExamSerializer(serializers.ModelSerializer):
     exam = MedicalExamSerializer(required=True)

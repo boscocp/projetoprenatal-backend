@@ -411,7 +411,44 @@ class OtherExamView(APIView):
             OtherExam.objects.filter(id=id).delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
         raise AuthenticationFailed('Not authenticated')
-       
+class UltrassoundExamView(APIView):
+    def get(self, request,pk):
+        if isAuthenticated(request):
+            id = int(pk)
+            exams = UltrasoundExam.objects.filter(exam__prenatal__patient__id=id)
+            serializer = UltrasoundExamSerializer(exams, many=True)
+            return Response(serializer.data)
+        raise AuthenticationFailed('Not authenticated')
+    def post(self, request):
+        if isAuthenticated(request):
+            id = int(request.data['patient_id'])
+            pre = Prenatal.objects.filter(patient__id=id).first()
+            serializer = UltrasoundExamSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            exam_instance = serializer.save()
+            pre.medicalexam_set.add(exam_instance.exam, bulk=False)
+            return Response(serializer.data)
+        raise AuthenticationFailed('Not authenticated')
+    def put(self, request,pk):
+        if isAuthenticated(request):
+            id = int(pk)
+            reagent_exam = UltrasoundExam.objects.get(id=id)
+            serializer = UltrasoundExamSerializer(reagent_exam,data=request.data)
+            serializer.is_valid(raise_exception=True)    
+            serializer.save()
+            response = Response()
+            response.data = {
+                'exam':'exam update success'
+            }
+            return response
+        raise AuthenticationFailed('Not authenticated')
+    def delete(self, request, pk):
+        if isAuthenticated(request):
+            id = int(pk)
+            UltrasoundExam.objects.filter(id=id).delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        raise AuthenticationFailed('Not authenticated')
+           
 class ReagentExamView(APIView):
     def get(self, request,pk):
         if isAuthenticated(request):
